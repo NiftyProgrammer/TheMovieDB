@@ -1,4 +1,4 @@
-package com.awok.themoviedb.Activities;
+package com.awok.themoviedb.activities;
 
 import android.app.Activity;
 import android.content.Intent;

@@ -1,23 +1,29 @@
-package com.awok.themoviedb.Activities;
+package com.awok.themoviedb.activities;
 
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
 import com.awok.themoviedb.R;
+import com.awok.themoviedb.adapters.RecyclerViewAdapter;
+import com.awok.themoviedb.datamanager.DataManager;
+import com.awok.themoviedb.datamanager.models.PopularModel;
 import com.crashlytics.android.Crashlytics;
+import com.facebook.drawee.backends.pipeline.Fresco;
+
 import io.fabric.sdk.android.Fabric;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -29,7 +35,10 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         Fabric.with(this, new Crashlytics());
+        Fresco.initialize(this);
+
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -48,6 +57,7 @@ public class MainActivity extends AppCompatActivity
         mLayoutManager = new GridLayoutManager(this, 2);
 
         mRecyclerView.setHasFixedSize(true);
+        mRecyclerView.setLayoutManager(mLayoutManager);
     }
 
     @Override
@@ -105,5 +115,29 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        DataManager manager = new DataManager();
+        Call<PopularModel> call = manager.getPopularMovies(1);
+        call.enqueue(new Callback<PopularModel>() {
+            @Override
+            public void onResponse(Call<PopularModel> call, Response<PopularModel> response) {
+                if ( response.code() == 200 ) {
+                    PopularModel pMovies = response.body();
+                    Log.d("EUMAMUS", "Total = " + pMovies.totalPages);
+                    mAdapter = new RecyclerViewAdapter(MainActivity.this, pMovies);
+                    mRecyclerView.setAdapter(mAdapter);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<PopularModel> call, Throwable t) {
+
+            }
+        });
     }
 }
