@@ -1,9 +1,11 @@
 package com.awok.themoviedb.datamanager;
 
+import com.awok.themoviedb.datamanager.features.Details;
 import com.awok.themoviedb.datamanager.features.NowPlaying;
 import com.awok.themoviedb.datamanager.features.Popular;
 import com.awok.themoviedb.datamanager.features.TopRated;
 import com.awok.themoviedb.datamanager.features.Upcoming;
+import com.awok.themoviedb.datamanager.models.DetailsModel;
 import com.awok.themoviedb.datamanager.models.PopularModel;
 
 import okhttp3.OkHttpClient;
@@ -55,6 +57,12 @@ public class DataManager {
 
         if (c != null)
             c.enqueue(this.callback);
+    }
+
+    public void getMovieDetails(int id) {
+        Details details = retrofit.create(Details.class);
+        Call<DetailsModel> call = details.getJson(id, _API_KEY);
+        call.enqueue(callback);
     }
 
     private Call<PopularModel> getPopularMovies( int pageNo ) {

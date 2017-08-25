@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     tools:context="com.awok.themoviedb.activities.SplashActivity"
     android:fitsSystemWindows="true"
-    android:background="@color/colorPrimary">
+    android:background="@drawable/side_nav_bar">
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -14,10 +14,10 @@
 
         <ImageView
             android:id="@+id/imageView3"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="180dp"
+            android:layout_height="180dp"
             android:layout_centerHorizontal="true"
             android:layout_centerVertical="true"
-            android:src="@drawable/movie_db" />
+            android:src="@mipmap/ic_launcher" />
     </RelativeLayout>
 </android.support.constraint.ConstraintLayout>

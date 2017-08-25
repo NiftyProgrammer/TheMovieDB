@@ -93,6 +93,14 @@ public class MainActivity extends AppCompatActivity
         mRecyclerView.setAdapter(mAdapter);
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setLayoutManager(mLayoutManager);
+
+        selectedDataType = DataType.Popular_Movies;
+
+        //pagination
+        Paginate.with(mRecyclerView, callbacks)
+                .setLoadingTriggerThreshold(4)
+                .addLoadingListItem(true)
+                .build();
     }
 
     @Override
@@ -161,14 +169,6 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onStart() {
         super.onStart();
-
-        selectedDataType = DataType.Popular_Movies;
-
-        //pagination
-        Paginate.with(mRecyclerView, callbacks)
-                .setLoadingTriggerThreshold(4)
-                .addLoadingListItem(true)
-                .build();
     }
 
     private void getNextPage() {

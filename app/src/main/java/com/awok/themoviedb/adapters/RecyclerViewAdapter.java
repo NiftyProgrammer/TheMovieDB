@@ -51,7 +51,8 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewHolder
 
     @Override
     public void onBindViewHolder(RecyclerViewHolders holder, int position) {
-        holder.getTitle().setText(itemList.get(position).title);
+        holder.getTitle().setText(itemList.get(position).title + " (" +
+        itemList.get(position).releaseDate.split("-")[0] + ")");
 
         //setting image
         Uri uri = Uri.parse( "https://image.tmdb.org/t/p/w500" + itemList.get(position).posterPath );
