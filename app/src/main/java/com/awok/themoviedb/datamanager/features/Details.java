@@ -12,6 +12,6 @@ import retrofit2.http.Query;
  */
 
 public interface Details {
-    @GET("{movieid}")
+    @GET("movie/{movieid}")
     Call<DetailsModel> getJson(@Path("movieid") int movie_id, @Query("api_key") String api);
 }

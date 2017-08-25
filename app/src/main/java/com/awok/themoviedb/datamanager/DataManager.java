@@ -3,14 +3,19 @@ package com.awok.themoviedb.datamanager;
 import com.awok.themoviedb.datamanager.features.Details;
 import com.awok.themoviedb.datamanager.features.NowPlaying;
 import com.awok.themoviedb.datamanager.features.Popular;
+import com.awok.themoviedb.datamanager.features.Search;
 import com.awok.themoviedb.datamanager.features.TopRated;
 import com.awok.themoviedb.datamanager.features.Upcoming;
 import com.awok.themoviedb.datamanager.models.DetailsModel;
-import com.awok.themoviedb.datamanager.models.PopularModel;
+import com.awok.themoviedb.datamanager.models.MovieModel;
 
-import okhttp3.OkHttpClient;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.List;
+
 import retrofit2.Call;
 import retrofit2.Callback;
+import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
@@ -22,8 +27,9 @@ public class DataManager {
 
     private Retrofit retrofit;
     private Callback callback;
+    private String searchedQuery;
 
-    private String _BASE_URL = "https://api.themoviedb.org/3/movie/";
+    private String _BASE_URL = "https://api.themoviedb.org/3/";
     private String _API_KEY = "70ee3af0454ea20ca9ffe5aafc9047d8";
 
     public DataManager(Callback callback) {
@@ -32,6 +38,10 @@ public class DataManager {
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
         this.callback = callback;
+    }
+
+    public void setSearchedQuery(String query) {
+        this.searchedQuery = query;
     }
 
     public void getNextPage(int pageNo, DataType type) {
@@ -53,6 +63,10 @@ public class DataManager {
                 c = getNowPlayingMovies(pageNo);
                 break;
             }
+            case Search_Movies: {
+                c = getSearchedMovies(pageNo, searchedQuery);
+                break;
+            }
         }
 
         if (c != null)
@@ -65,27 +79,40 @@ public class DataManager {
         call.enqueue(callback);
     }
 
-    private Call<PopularModel> getPopularMovies( int pageNo ) {
+    private Call<MovieModel> getPopularMovies(int pageNo ) {
         Popular popular = retrofit.create(Popular.class);
-        Call<PopularModel> call = popular.getJson( _API_KEY, pageNo );
+        Call<MovieModel> call = popular.getJson( _API_KEY, pageNo );
         return call;
     }
 
-    private Call<PopularModel> getTopRatedMovies(int pageNo) {
+    private Call<MovieModel> getTopRatedMovies(int pageNo) {
         TopRated topRated = retrofit.create(TopRated.class);
-        Call<PopularModel> call = topRated.getJson(_API_KEY, pageNo);
+        Call<MovieModel> call = topRated.getJson(_API_KEY, pageNo);
         return call;
     }
 
-    private Call<PopularModel> getUpcomingMovies(int pageNo) {
+    private Call<MovieModel> getUpcomingMovies(int pageNo) {
         Upcoming upcoming = retrofit.create(Upcoming.class);
-        Call<PopularModel> call = upcoming.getJson(_API_KEY, pageNo);
+        Call<MovieModel> call = upcoming.getJson(_API_KEY, pageNo);
         return call;
     }
 
-    private Call<PopularModel> getNowPlayingMovies(int pageNo) {
+    private Call<MovieModel> getNowPlayingMovies(int pageNo) {
         NowPlaying nowPlaying = retrofit.create(NowPlaying.class);
-        Call<PopularModel> call = nowPlaying.getJson(_API_KEY, pageNo);
+        Call<MovieModel> call = nowPlaying.getJson(_API_KEY, pageNo);
+        return call;
+    }
+
+    private Call<MovieModel> getSearchedMovies(int pageNo, String query) {
+        Search search = retrofit.create(Search.class);
+        Call<MovieModel> call = null;
+        try {
+            call = search.getJson(_API_KEY,
+                    URLEncoder.encode(query, "UTF-8"),
+                    pageNo);
+        } catch (UnsupportedEncodingException e) {
+            call = search.getJson(_API_KEY, query, pageNo);
+        }
         return call;
     }
 }

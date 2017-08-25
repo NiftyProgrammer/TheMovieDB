@@ -9,7 +9,7 @@ import java.util.List;
  * Created by Umair on 8/24/2017.
  */
 
-public class PopularModel {
+public class MovieModel {
 
     @SerializedName("page")
     public Integer page;

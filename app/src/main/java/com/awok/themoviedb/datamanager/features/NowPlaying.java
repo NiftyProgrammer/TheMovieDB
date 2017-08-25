@@ -1,6 +1,6 @@
 package com.awok.themoviedb.datamanager.features;
 
-import com.awok.themoviedb.datamanager.models.PopularModel;
+import com.awok.themoviedb.datamanager.models.MovieModel;
 
 import retrofit2.Call;
 import retrofit2.http.GET;
@@ -11,6 +11,6 @@ import retrofit2.http.Query;
  */
 
 public interface NowPlaying {
-    @GET("now_playing")
-    Call<PopularModel> getJson(@Query("api_key") String api, @Query("page") int page);
+    @GET("movie/now_playing")
+    Call<MovieModel> getJson(@Query("api_key") String api, @Query("page") int page);
 }

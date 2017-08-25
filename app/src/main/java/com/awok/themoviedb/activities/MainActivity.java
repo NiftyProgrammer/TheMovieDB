@@ -1,7 +1,8 @@
 package com.awok.themoviedb.activities;
 
 import android.os.Bundle;
-import android.support.v7.widget.DefaultItemAnimator;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.design.widget.NavigationView;
@@ -13,18 +14,19 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.ViewGroup;
 
 import com.awok.themoviedb.R;
 import com.awok.themoviedb.adapters.RecyclerViewAdapter;
 import com.awok.themoviedb.datamanager.DataManager;
 import com.awok.themoviedb.datamanager.DataType;
-import com.awok.themoviedb.datamanager.models.PopularModel;
+import com.awok.themoviedb.datamanager.models.MovieModel;
 import com.crashlytics.android.Crashlytics;
 import com.facebook.drawee.backends.pipeline.Fresco;
+import com.miguelcatalan.materialsearchview.MaterialSearchView;
 import com.paginate.Paginate;
-import com.paginate.recycler.LoadingListItemCreator;
-import com.paginate.recycler.LoadingListItemSpanLookup;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import io.fabric.sdk.android.Fabric;
 import retrofit2.Call;
@@ -36,11 +38,12 @@ public class MainActivity extends AppCompatActivity
 
     private int currentPage = 0;
     private int totalPage = Integer.MAX_VALUE;
-    private boolean loading = false;
+    private boolean loading = false, searchComplete = false;
 
     private RecyclerView mRecyclerView;
     private RecyclerViewAdapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
+    private MaterialSearchView searchView;
     private DataManager dataManager;
     private DataType selectedDataType;
 
@@ -101,6 +104,36 @@ public class MainActivity extends AppCompatActivity
                 .setLoadingTriggerThreshold(4)
                 .addLoadingListItem(true)
                 .build();
+
+
+        //search view
+        searchView = (MaterialSearchView) findViewById(R.id.search_view);
+        searchView.setOnQueryTextListener(new MaterialSearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                //Do some magic
+                searchComplete = true;
+                selectedDataType = DataType.Search_Movies;
+                getSupportActionBar().setTitle(query);
+
+                dataManager.setSearchedQuery(query);
+                updateView();
+
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                //Do some magic
+                if (!newText.isEmpty()) {
+                    searchComplete = false;
+                    dataManager.setSearchedQuery(newText);
+                    dataManager.getNextPage(1, DataType.Search_Movies);
+                    return true;
+                }
+                return false;
+            }
+        });
     }
 
     @Override
@@ -117,6 +150,11 @@ public class MainActivity extends AppCompatActivity
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
+
+        //inserting the search action item
+        MenuItem item = menu.findItem(R.id.action_search);
+        searchView.setMenuItem(item);
+
         return true;
     }
 
@@ -155,11 +193,7 @@ public class MainActivity extends AppCompatActivity
             selectedDataType = DataType.NowPlaying_Movies;
         }
 
-        currentPage = 0;
-        totalPage = Integer.MAX_VALUE;
-        int size = mAdapter.clear();
-        mAdapter.notifyItemRangeRemoved(0, size);
-        mAdapter.notifyDataSetChanged();
+        updateView();
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
@@ -171,6 +205,14 @@ public class MainActivity extends AppCompatActivity
         super.onStart();
     }
 
+    private void updateView() {
+        currentPage = 0;
+        totalPage = Integer.MAX_VALUE;
+        int size = mAdapter.clear();
+        mAdapter.notifyItemRangeRemoved(0, size);
+        mAdapter.notifyDataSetChanged();
+    }
+
     private void getNextPage() {
         dataManager.getNextPage(++currentPage, selectedDataType);
     }
@@ -178,12 +220,22 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onResponse(Call call, Response response) {
         if ( response.code() == 200 ) {
-            PopularModel pMovies = (PopularModel) response.body();
-            totalPage = pMovies.totalPages;
-            mAdapter.addItemList(pMovies);
-            mAdapter.notifyDataSetChanged();
+            if ( call.request().url().toString().contains("search") && !searchComplete ) {
+                //setting suggestions for search result
+                MovieModel model = (MovieModel) response.body();
+                List<MovieModel.Result> list = model.results;
+                ArrayList<String> suggestions = new ArrayList<>();
+                for (MovieModel.Result r : list) {
+                    suggestions.add(r.title);
+                }
+                searchView.setSuggestions(suggestions.toArray(new String[]{}));
+            } else {
+                MovieModel pMovies = (MovieModel) response.body();
+                totalPage = pMovies.totalPages;
+                mAdapter.addItemList(pMovies);
+                mAdapter.notifyDataSetChanged();
+            }
         }
-
         loading = false;
     }
 

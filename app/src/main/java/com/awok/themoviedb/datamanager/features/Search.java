@@ -10,7 +10,8 @@ import retrofit2.http.Query;
  * Created by Umair on 8/25/2017.
  */
 
-public interface Upcoming {
-    @GET("movie/upcoming")
-    Call<MovieModel> getJson(@Query("api_key") String api, @Query("page") int page);
+public interface Search {
+    @GET("search/movie")
+    Call<MovieModel> getJson(@Query("api_key") String api, @Query("query") String query,
+                             @Query("page") int page);
 }

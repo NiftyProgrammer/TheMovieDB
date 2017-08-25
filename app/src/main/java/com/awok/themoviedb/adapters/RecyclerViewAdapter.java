@@ -3,16 +3,14 @@ package com.awok.themoviedb.adapters;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.awok.themoviedb.R;
 import com.awok.themoviedb.activities.DetailsActivity;
-import com.awok.themoviedb.datamanager.models.PopularModel;
+import com.awok.themoviedb.datamanager.models.MovieModel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +21,7 @@ import java.util.List;
 
 public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewHolders> implements View.OnClickListener {
 
-    private List<PopularModel.Result> itemList;
+    private List<MovieModel.Result> itemList;
     private Context context;
 
     public RecyclerViewAdapter(Context context) {
@@ -31,7 +29,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewHolder
         this.context = context;
     }
 
-    public void addItemList(PopularModel list) {
+    public void addItemList(MovieModel list) {
         this.itemList.addAll(list.results);
     }
 

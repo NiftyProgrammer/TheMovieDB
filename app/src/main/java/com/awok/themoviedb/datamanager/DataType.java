@@ -5,6 +5,6 @@ package com.awok.themoviedb.datamanager;
  */
 
 public enum DataType {
-    Popular_Movies, TopRated_Movies, UpComing_Movies, NowPlaying_Movies;
+    Popular_Movies, TopRated_Movies, UpComing_Movies, NowPlaying_Movies, Search_Movies;
 
 }
