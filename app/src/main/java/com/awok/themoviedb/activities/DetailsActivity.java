@@ -3,16 +3,12 @@ package com.awok.themoviedb.activities;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.CollapsingToolbarLayout;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.text.method.LinkMovementMethod;
-import android.util.Log;
-import android.view.View;
 import android.widget.TextView;
 
 import com.awok.themoviedb.R;
+import com.awok.themoviedb.database.DatabaseManager;
 import com.awok.themoviedb.datamanager.DataManager;
 import com.awok.themoviedb.datamanager.models.DetailsModel;
 import com.facebook.drawee.view.SimpleDraweeView;
@@ -32,6 +28,7 @@ public class DetailsActivity extends AppCompatActivity implements Callback<Detai
     private TextView overview, gener, date, tagline, runtime, budget, revenue, homepage;
     private SimpleDraweeView mainBackground, posterImage;
     private CollapsingToolbarLayout toolbarLayout;
+    private DatabaseManager dbManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,15 +36,6 @@ public class DetailsActivity extends AppCompatActivity implements Callback<Detai
         setContentView(R.layout.activity_details);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
-        /*FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });*/
 
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
@@ -58,9 +46,13 @@ public class DetailsActivity extends AppCompatActivity implements Callback<Detai
         }
 
         init();
-
-        DataManager manager = new DataManager(this);
-        manager.getMovieDetails(id);
+        DetailsModel model = dbManager.fetchMovieDetailsById(id);
+        if (model == null) {
+            DataManager manager = new DataManager(this);
+            manager.getMovieDetails(id);
+        } else {
+            settingValues(model);
+        }
     }
 
     @Override
@@ -68,6 +60,7 @@ public class DetailsActivity extends AppCompatActivity implements Callback<Detai
         if (response.code() == 200) {
             DetailsModel details = response.body();
             settingValues(details);
+            dbManager.insertMovieDetails(details);
         }
     }
 
@@ -88,11 +81,13 @@ public class DetailsActivity extends AppCompatActivity implements Callback<Detai
         mainBackground = (SimpleDraweeView) findViewById(R.id.details_poster);
         posterImage = (SimpleDraweeView) findViewById(R.id.details_image);
         toolbarLayout = (CollapsingToolbarLayout) findViewById(R.id.toolbar_layout);
+
+        dbManager = new DatabaseManager(this).open();
     }
 
     private void settingValues(DetailsModel details) {
-        Uri uri = Uri.parse( "https://image.tmdb.org/t/p/w500" + details.backdropPath );
-        Uri imageUri = Uri.parse( "https://image.tmdb.org/t/p/w500" + details.posterPath );
+        Uri uri = Uri.parse( DataManager.IMAGE_BASE_URL + details.backdropPath );
+        Uri imageUri = Uri.parse( DataManager.IMAGE_BASE_URL + details.posterPath );
 
         mainBackground.setImageURI(uri);
         posterImage.setImageURI(imageUri);

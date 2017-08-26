@@ -1,22 +1,26 @@
 package com.awok.themoviedb.activities;
 
+import android.content.Context;
+import android.graphics.Color;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.support.design.widget.NavigationView;
+import android.support.design.widget.Snackbar;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 import com.awok.themoviedb.R;
 import com.awok.themoviedb.adapters.RecyclerViewAdapter;
+import com.awok.themoviedb.database.DatabaseManager;
 import com.awok.themoviedb.datamanager.DataManager;
 import com.awok.themoviedb.datamanager.DataType;
 import com.awok.themoviedb.datamanager.models.MovieModel;
@@ -25,8 +29,8 @@ import com.facebook.drawee.backends.pipeline.Fresco;
 import com.miguelcatalan.materialsearchview.MaterialSearchView;
 import com.paginate.Paginate;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import io.fabric.sdk.android.Fabric;
 import retrofit2.Call;
@@ -44,8 +48,11 @@ public class MainActivity extends AppCompatActivity
     private RecyclerViewAdapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
     private MaterialSearchView searchView;
+    private Set<String> searchAdapter;
     private DataManager dataManager;
     private DataType selectedDataType;
+    private DatabaseManager dbManager;
+
 
     private Paginate.Callbacks callbacks = new Paginate.Callbacks() {
         @Override
@@ -71,6 +78,7 @@ public class MainActivity extends AppCompatActivity
 
         Fabric.with(this, new Crashlytics());
         Fresco.initialize(this);
+        dbManager = new DatabaseManager(this).open();
 
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -108,10 +116,13 @@ public class MainActivity extends AppCompatActivity
 
         //search view
         searchView = (MaterialSearchView) findViewById(R.id.search_view);
+        searchAdapter = new TreeSet<>();
+        searchAdapter.addAll(dbManager.fetchAllTitles());
+        searchView.setSuggestions(searchAdapter.toArray(new String[]{}));
+        searchView.setSubmitOnClick(true);
         searchView.setOnQueryTextListener(new MaterialSearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                //Do some magic
                 searchComplete = true;
                 selectedDataType = DataType.Search_Movies;
                 getSupportActionBar().setTitle(query);
@@ -124,7 +135,6 @@ public class MainActivity extends AppCompatActivity
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                //Do some magic
                 if (!newText.isEmpty()) {
                     searchComplete = false;
                     dataManager.setSearchedQuery(newText);
@@ -141,9 +151,20 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
+        } else if (searchView.isSearchOpen()) {
+            searchView.closeSearch();
         } else {
             super.onBackPressed();
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (dbManager != null) {
+            dbManager.close();
+        }
+
+        super.onDestroy();
     }
 
     @Override
@@ -214,26 +235,39 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void getNextPage() {
-        dataManager.getNextPage(++currentPage, selectedDataType);
+        if (isNetworkConnected()) {
+            dataManager.getNextPage(++currentPage, selectedDataType);
+        } else {
+            Snackbar.make(findViewById(android.R.id.content), "Internet not accessable", Snackbar.LENGTH_LONG)
+                    .setAction("Ok", new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {}
+                    })
+                    .setActionTextColor(Color.GREEN)
+                    .show();
+        }
+    }
+
+    private boolean isNetworkConnected() {
+        ConnectivityManager cm =
+                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        return netInfo != null && netInfo.isConnectedOrConnecting();
     }
 
     @Override
     public void onResponse(Call call, Response response) {
         if ( response.code() == 200 ) {
+            MovieModel model = (MovieModel) response.body();
             if ( call.request().url().toString().contains("search") && !searchComplete ) {
                 //setting suggestions for search result
-                MovieModel model = (MovieModel) response.body();
-                List<MovieModel.Result> list = model.results;
-                ArrayList<String> suggestions = new ArrayList<>();
-                for (MovieModel.Result r : list) {
-                    suggestions.add(r.title);
-                }
-                searchView.setSuggestions(suggestions.toArray(new String[]{}));
+                searchAdapter.addAll(dbManager.insertAllMovie(model));
+                searchView.setSuggestions(searchAdapter.toArray(new String[]{}));
             } else {
-                MovieModel pMovies = (MovieModel) response.body();
-                totalPage = pMovies.totalPages;
-                mAdapter.addItemList(pMovies);
+                totalPage = model.totalPages;
+                mAdapter.addItemList(model);
                 mAdapter.notifyDataSetChanged();
+                dbManager.insertAllMovie(model);
             }
         }
         loading = false;

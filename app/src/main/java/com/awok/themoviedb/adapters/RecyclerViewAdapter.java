@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 
 import com.awok.themoviedb.R;
 import com.awok.themoviedb.activities.DetailsActivity;
+import com.awok.themoviedb.datamanager.DataManager;
 import com.awok.themoviedb.datamanager.models.MovieModel;
 
 import java.util.ArrayList;
@@ -53,7 +54,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewHolder
         itemList.get(position).releaseDate.split("-")[0] + ")");
 
         //setting image
-        Uri uri = Uri.parse( "https://image.tmdb.org/t/p/w500" + itemList.get(position).posterPath );
+        Uri uri = Uri.parse( DataManager.IMAGE_BASE_URL + itemList.get(position).posterPath );
         holder.getPosterImage().setImageURI(uri);
         holder.setID(itemList.get(position).id);
     }

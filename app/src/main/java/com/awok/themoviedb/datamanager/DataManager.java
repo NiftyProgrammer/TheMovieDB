@@ -11,11 +11,9 @@ import com.awok.themoviedb.datamanager.models.MovieModel;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;
-import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
@@ -29,8 +27,10 @@ public class DataManager {
     private Callback callback;
     private String searchedQuery;
 
-    private String _BASE_URL = "https://api.themoviedb.org/3/";
-    private String _API_KEY = "70ee3af0454ea20ca9ffe5aafc9047d8";
+    private final String _BASE_URL = "https://api.themoviedb.org/3/";
+    private final String _API_KEY = "70ee3af0454ea20ca9ffe5aafc9047d8";
+
+    public static final String IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500";
 
     public DataManager(Callback callback) {
         retrofit = new Retrofit.Builder()
